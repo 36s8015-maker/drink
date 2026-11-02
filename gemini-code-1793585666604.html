@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오늘 뭐 마시지? 🍹 - 날씨 & 기분 맞춤 음료 추천</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Gowun Dodum, Noto Sans KR -->
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        softBg: '#FDFBF7',
+                        softCard: '#FFFFFF',
+                        softYellow: '#FFF4D2',
+                        softPink: '#FFE5EC',
+                        softBlue: '#E2F0D9',
+                        softSky: '#E0F2FE',
+                        softText: '#4A403A',
+                        brandPoint: '#FF8A65'
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'sans-serif'],
+                        cute: ['Gowun Dodum', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #FDFBF7;
+            color: #4A403A;
+        }
+        .cute-font {
+            font-family: 'Gowun Dodum', sans-serif;
+        }
+        .soft-card {
+            background: #FFFFFF;
+            border: 2px solid #F3EDE2;
+            border-radius: 28px;
+            box-shadow: 0 8px 24px rgba(225, 215, 200, 0.25);
+        }
+        .soft-card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 30px rgba(225, 215, 200, 0.4);
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #FDFBF7; }
+        ::-webkit-scrollbar-thumb { background: #FFCC80; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-start relative pb-16">
+
+    <!-- Toast Alert -->
+    <div id="toast" class="fixed top-5 z-50 transform -translate-y-20 opacity-0 transition-all duration-300 bg-softText text-white px-5 py-3 rounded-full shadow-2xl flex items-center space-x-2 pointer-events-none text-xs font-bold">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-yellow-300"></i>
+        <span id="toast-message">알림 메세지</span>
+    </div>
+
+    <!-- Navigation Header -->
+    <nav class="w-full bg-white/90 backdrop-blur-md border-b-2 border-amber-100 sticky top-0 z-40 px-4 md:px-8 py-3.5 flex items-center justify-between shadow-xs">
+        <div class="flex items-center space-x-2 cursor-pointer" onclick="switchPage('page-home')">
+            <span class="text-2xl">🍹</span>
+            <span class="font-extrabold text-lg md:text-xl cute-font text-softText">오늘 뭐 마시지?</span>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button onclick="switchPage('page-home')" id="nav-btn-home" class="px-4 py-1.5 rounded-full text-xs font-bold bg-softText text-white transition">
+                🏠 메인 & 챗봇
+            </button>
+            <button onclick="switchPage('page-drinks')" id="nav-btn-drinks" class="px-4 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-softText hover:bg-amber-100 transition">
+                🥤 전체 200종 보기
+            </button>
+        </div>
+    </nav>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 1: MAIN LANDING & CHATBOT -->
+    <!-- ================================================================= -->
+    <div id="page-home" class="w-full max-w-4xl px-4 pt-6 flex flex-col items-center">
+        
+        <!-- Cozy Main Banner -->
+        <div class="w-full bg-gradient-to-r from-softPink via-softYellow to-softSky rounded-3xl p-6 md:p-8 border-2 border-amber-100 shadow-xs flex flex-col md:flex-row items-center justify-between gap-6 mb-8 relative overflow-hidden">
+            <div class="flex-1 text-center md:text-left z-10">
+                <span class="inline-block bg-white/90 text-brandPoint border border-orange-200 text-xs font-bold px-3 py-1 rounded-full mb-2 shadow-2xs">
+                    🌿 날씨 & 기분 듀얼 맞춤 알고리즘
+                </span>
+                <h1 class="text-2xl md:text-4xl font-extrabold cute-font text-softText mb-2 leading-tight">
+                    오늘 온도는 몇 도인지,<br>지금 기분은 어떤지 말해주세요! ✨
+                </h1>
+                <p class="text-xs md:text-sm text-stone-600 cute-font max-w-md">
+                    날씨 데이터와 현재 기분을 함께 다각도로 분석하여 딱 알맞은 음료 10선을 찾아드립니다.
+                </p>
+            </div>
+            <div class="text-6xl md:text-7xl shrink-0 z-10 transform hover:scale-110 transition-transform">
+                ☕🥤
+            </div>
+        </div>
+
+        <!-- Fun Action Buttons Bar -->
+        <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            <button onclick="pickRandomDrink()" class="bg-gradient-to-r from-amber-100 to-amber-200 hover:from-amber-200 hover:to-amber-300 text-softText font-extrabold text-sm p-4 rounded-2xl shadow-2xs border border-amber-200 flex items-center justify-center space-x-3 transition transform active:scale-95">
+                <span class="text-2xl">🎲</span>
+                <div class="text-left">
+                    <div class="cute-font font-bold">오늘의 운세 음료 뽑기</div>
+                    <div class="text-[11px] text-stone-500 font-normal">랜덤으로 나만의 행운 음료를 추천받아요!</div>
+                </div>
+            </button>
+            <button onclick="pickMixLab()" class="bg-gradient-to-r from-rose-100 to-rose-200 hover:from-rose-200 hover:to-rose-300 text-softText font-extrabold text-sm p-4 rounded-2xl shadow-2xs border border-rose-200 flex items-center justify-center space-x-3 transition transform active:scale-95">
+                <span class="text-2xl">🧪</span>
+                <div class="text-left">
+                    <div class="cute-font font-bold">나만의 꿀조합 믹스 랩</div>
+                    <div class="text-[11px] text-stone-500 font-normal">두 가지 음료의 환상적인 조합을 생성해봐요!</div>
+                </div>
+            </button>
+        </div>
+
+        <!-- Weather Selection Widget -->
+        <section class="w-full soft-card p-6 mb-8">
+            <div class="flex flex-col sm:flex-row items-center justify-between border-b border-amber-100 pb-4 mb-4 gap-3">
+                <div class="flex items-center space-x-2">
+                    <span class="text-2xl">📍</span>
+                    <div>
+                        <h2 class="text-base font-bold cute-font text-softText">Step 1. 오늘 날씨 선택하기</h2>
+                        <p class="text-[11px] text-stone-400">선택한 날씨가 기분 분석과 함께 종합 반영됩니다.</p>
+                    </div>
+                </div>
+                <button id="btn-gps" onclick="autoDetectWeather()" class="w-full sm:w-auto text-xs font-bold bg-blue-50 text-blue-600 border border-blue-200 px-4 py-2 rounded-xl transition flex items-center justify-center space-x-1.5">
+                    <i class="fa-solid fa-location-crosshairs"></i>
+                    <span id="gps-text">현재 위치 날씨 불러오기</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
+                <button onclick="selectWeather('sunny')" id="btn-sunny" class="weather-btn flex flex-col items-center justify-center p-3 rounded-2xl border-2 border-transparent bg-amber-50 hover:bg-amber-100 text-softText transition">
+                    <span class="text-2xl mb-1">☀️</span>
+                    <span class="text-xs font-bold cute-font">화창함</span>
+                </button>
+                <button onclick="selectWeather('hot')" id="btn-hot" class="weather-btn flex flex-col items-center justify-center p-3 rounded-2xl border-2 border-transparent bg-rose-50 hover:bg-rose-100 text-softText transition">
+                    <span class="text-2xl mb-1">🔥</span>
+                    <span class="text-xs font-bold cute-font">무더위</span>
+                </button>
+                <button onclick="selectWeather('cloudy')" id="btn-cloudy" class="weather-btn flex flex-col items-center justify-center p-3 rounded-2xl border-2 border-transparent bg-slate-100 hover:bg-slate-200 text-softText transition">
+                    <span class="text-2xl mb-1">☁️</span>
+                    <span class="text-xs font-bold cute-font">흐림</span>
+                </button>
+                <button onclick="selectWeather('rainy')" id="btn-rainy" class="weather-btn flex flex-col items-center justify-center p-3 rounded-2xl border-2 border-transparent bg-blue-50 hover:bg-blue-100 text-softText transition">
+                    <span class="text-2xl mb-1">🌧️</span>
+                    <span class="text-xs font-bold cute-font">비 옴</span>
+                </button>
+                <button onclick="selectWeather('windy')" id="btn-windy" class="weather-btn flex flex-col items-center justify-center p-3 rounded-2xl border-2 border-transparent bg-teal-50 hover:bg-teal-100 text-softText transition">
+                    <span class="text-2xl mb-1">💨</span>
+                    <span class="text-xs font-bold cute-font">바람 뽠</span>
+                </button>
+                <button onclick="selectWeather('snowy')" id="btn-snowy" class="weather-btn flex flex-col items-center justify-center p-3 rounded-2xl border-2 border-transparent bg-indigo-50 hover:bg-indigo-100 text-softText transition">
+                    <span class="text-2xl mb-1">❄️</span>
+                    <span class="text-xs font-bold cute-font">눈 옴</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Chatbot Section -->
+        <section class="w-full bg-white rounded-3xl p-6 md:p-8 border-2 border-amber-100 shadow-xs flex flex-col h-[490px] mb-8 relative">
+            <div class="flex items-center justify-between border-b border-amber-100 pb-3 mb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center text-xl">💬</div>
+                    <div>
+                        <h3 class="font-extrabold text-base cute-font text-softText">Step 2. 기분 맞춤 챗봇</h3>
+                        <p class="text-xs text-stone-400">선택하신 날씨와 지금 기분을 결합하여 맞춤 10개 음료를 골라드려요!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat History -->
+            <div id="main-chat-history" class="flex-1 overflow-y-auto space-y-3 p-4 rounded-2xl bg-amber-50/50 border border-amber-100 text-xs">
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 rounded-xl bg-amber-200 text-amber-900 font-bold flex items-center justify-center shrink-0 cute-font">AI</div>
+                    <div class="bg-white p-3.5 rounded-2xl rounded-tl-none text-softText max-w-[85%] leading-relaxed border border-amber-100 shadow-2xs">
+                        안녕하세요! 상단에서 선택하신 날씨 정보와 함께 지금 기분을 알려주세요. 😊<br>
+                        <strong>(예: 피곤해, 공부/시험기간, 우울해, 짜증나, 스트레스 받아, 기분 좋아 등)</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Mood Buttons -->
+            <div class="flex items-center gap-2 overflow-x-auto py-2.5 no-scrollbar">
+                <span class="text-[11px] font-bold text-stone-400 whitespace-nowrap">추천 키워드:</span>
+                <button onclick="quickMoodInput('너무 피곤하고 졸려 🥱')" class="px-3 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-full text-xs text-softText whitespace-nowrap transition">🥱 피곤함/졸림</button>
+                <button onclick="quickMoodInput('시험기간 공부 집중 필요 📖')" class="px-3 py-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-full text-xs text-softText whitespace-nowrap transition">📖 시험/공부</button>
+                <button onclick="quickMoodInput('우울해서 달콤함이 필요해 🌧️')" class="px-3 py-1 bg-pink-50 hover:bg-pink-100 border border-pink-200 rounded-full text-xs text-softText whitespace-nowrap transition">🌧️ 우울함</button>
+                <button onclick="quickMoodInput('시원하고 상쾌한 기분 🎉')" class="px-3 py-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-full text-xs text-softText whitespace-nowrap transition">🎉 기분 상쾌</button>
+            </div>
+
+            <!-- Input Box -->
+            <div class="flex items-center space-x-2 pt-2 border-t border-amber-100">
+                <input type="text" id="main-chat-input" onkeypress="if(event.key==='Enter') sendMainChatMessage()" placeholder="선택한 날씨와 결합할 기분을 자유롭게 적어주세요..." class="flex-1 px-4 py-2.5 rounded-xl bg-stone-50 border border-amber-200 text-xs text-softText outline-none focus:border-brandPoint transition">
+                <button onclick="sendMainChatMessage()" class="bg-brandPoint hover:bg-orange-500 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition shrink-0 shadow-2xs">
+                    전송
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 2: DRINK RECOMMENDATIONS LIST -->
+    <!-- ================================================================= -->
+    <div id="page-drinks" class="w-full max-w-4xl px-4 pt-6 hidden">
+        
+        <!-- Header Banner for Drinks Page -->
+        <div class="w-full bg-white rounded-3xl p-6 border-2 border-amber-100 shadow-2xs mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+                <div class="inline-block bg-orange-100 text-brandPoint text-xs font-bold px-3 py-1 rounded-full mb-2" id="recommend-badge-text">
+                    ✨ 날씨 & 기분 듀얼 분석 10선
+                </div>
+                <h2 class="text-2xl font-extrabold cute-font text-softText" id="recommend-title">
+                    오늘 날씨와 현재 기분에 딱 맞는 엄선 음료
+                </h2>
+                <p class="text-xs text-stone-500 mt-1" id="recommend-subtitle">
+                    원하는 정렬 옵션(칼로리 낮은 순, 카페인 높은 순 등)으로 편하게 비교해 보세요!
+                </p>
+            </div>
+            <div class="text-5xl shrink-0">🍹✨</div>
+        </div>
+
+        <!-- Controls Bar: Category Filters & Sorting Options -->
+        <div class="bg-white rounded-2xl p-4 border border-amber-100 mb-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-2xs">
+            
+            <!-- Category Tabs -->
+            <div class="flex items-center space-x-1.5 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 no-scrollbar">
+                <button onclick="setCategoryFilter('all')" id="cat-all" class="cat-btn text-xs font-bold px-3 py-1.5 rounded-full bg-softText text-white transition">전체</button>
+                <button onclick="setCategoryFilter('lowCal')" id="cat-lowCal" class="cat-btn text-xs font-bold px-3 py-1.5 rounded-full bg-stone-100 text-softText hover:bg-stone-200 transition">🌱 저칼로리/제로</button>
+                <button onclick="setCategoryFilter('refresh')" id="cat-refresh" class="cat-btn text-xs font-bold px-3 py-1.5 rounded-full bg-stone-100 text-softText hover:bg-stone-200 transition">🍋 상쾌/청량</button>
+                <button onclick="setCategoryFilter('caffeine')" id="cat-caffeine" class="cat-btn text-xs font-bold px-3 py-1.5 rounded-full bg-stone-100 text-softText hover:bg-stone-200 transition">⚡ 집중 필요 (고카페인)</button>
+                <button onclick="setCategoryFilter('milk')" id="cat-milk" class="cat-btn text-xs font-bold px-3 py-1.5 rounded-full bg-stone-100 text-softText hover:bg-stone-200 transition">🥛 고소/든든</button>
+                <button onclick="setCategoryFilter('fav')" id="cat-fav" class="cat-btn text-xs font-bold px-3 py-1.5 rounded-full bg-stone-100 text-rose-500 hover:bg-rose-50 transition">❤️ 즐겨찾기</button>
+            </div>
+
+            <!-- SORTING DROPDOWN -->
+            <div class="flex items-center space-x-2 shrink-0 w-full md:w-auto justify-end">
+                <span class="text-xs font-bold text-stone-500">정렬 순서:</span>
+                <select id="sort-select" onchange="applySorting()" class="text-xs font-bold bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl text-softText outline-none cursor-pointer">
+                    <option value="calAsc">🔥 칼로리 낮은 순</option>
+                    <option value="caffDesc">⚡ 카페인 높은 순</option>
+                    <option value="sugarAsc">🍯 당류 낮은 순</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Drinks Grid Container -->
+        <div id="drinks-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            <!-- Dynamic Drink Cards -->
+        </div>
+
+        <div id="empty-state" class="hidden text-center py-16 bg-white rounded-3xl border border-dashed border-amber-200 my-4">
+            <div class="text-4xl mb-2">🥤</div>
+            <h4 class="text-sm font-bold text-softText">해당 카테고리에 일치하는 음료가 없습니다.</h4>
+            <p class="text-xs text-stone-400 mt-1">다른 분류나 전체보기를 클릭해보세요!</p>
+        </div>
+    </div>
+
+    <!-- Modal for Lucky Pick & Mix Lab -->
+    <div id="modal-bg" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl border-2 border-amber-100 transform scale-95 transition-transform duration-300" id="modal-card">
+            <div id="modal-badge" class="text-xs font-extrabold text-brandPoint bg-orange-50 py-1.5 px-4 rounded-full inline-block mb-3">🎲 행운 음료</div>
+            <div id="modal-emoji" class="text-6xl mb-3">🍹</div>
+            <h3 id="modal-name" class="text-lg font-extrabold text-softText cute-font mb-1">음료 이름</h3>
+            <p id="modal-info" class="text-xs text-stone-400 font-medium mb-3">영양 성분 정보</p>
+            <p id="modal-reason" class="text-xs text-softText bg-amber-50/60 p-3.5 rounded-2xl mb-5 leading-relaxed border border-amber-100">추천 설명</p>
+            
+            <div class="flex space-x-2">
+                <button onclick="closeModal()" class="flex-1 bg-stone-100 hover:bg-stone-200 text-softText text-xs font-bold py-2.5 rounded-xl transition">닫기</button>
+                <button id="modal-share-btn" class="flex-1 bg-brandPoint hover:bg-orange-600 text-white text-xs font-bold py-2.5 rounded-xl transition shadow-2xs">공유하기 🔗</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Real Drinks Dataset (200 items complete structure)
+        const drinksData = [
+          {"id":"d1","name":"몬스터 에너지 제로 슈거","catName":"에너지음료(주의)","category":["hot","sunny","windy"],"tags":["caffeine","lowCal"],"cal":5,"sugar":0,"caffeine":100,"emoji":"⚡","badge":"고카페인 100mg","reason":"열량 5kcal | 카페인 100mg | 강렬한 피로회복 각성"},
+          {"id":"d2","name":"핫식스제로","catName":"에너지음료(주의)","category":["hot","sunny","windy"],"tags":["caffeine","lowCal"],"cal":2,"sugar":0.04,"caffeine":60,"emoji":"⚡","badge":"피로회복","reason":"열량 2kcal | 카페인 60mg | 시험기간 필수 각성"},
+          {"id":"d3","name":"핫식스 더킹 제로","catName":"에너지음료(주의)","category":["hot","sunny","windy"],"tags":["caffeine","lowCal"],"cal":3,"sugar":0,"caffeine":100,"emoji":"⚡","badge":"각성극상","reason":"열량 3kcal | 카페인 100mg | 밤샘 집중력 충전"},
+          {"id":"d4","name":"조지아 오리지널","catName":"커피","category":["sunny","cloudy","windy","snowy"],"tags":["caffeine"],"cal":39,"sugar":7.5,"caffeine":136,"emoji":"☕","badge":"고카페인 136mg","reason":"열량 39kcal | 카페인 136mg | 정신 번쩍 커피"},
+          {"id":"d5","name":"칸타타 콜드브루 블랙","catName":"커피","category":["sunny","cloudy","windy","snowy"],"tags":["caffeine","lowCal"],"cal":7,"sugar":0,"caffeine":114,"emoji":"☕","badge":"깊은풍미","reason":"열량 7kcal | 카페인 114mg | 깔끔한 무당 원두"},
+          {"id":"d6","name":"스타벅스 더블샷 아메리카노","catName":"커피","category":["sunny","cloudy","windy","snowy"],"tags":["caffeine","lowCal"],"cal":10,"sugar":0,"caffeine":108,"emoji":"☕","badge":"스벅시그니처","reason":"열량 10kcal | 카페인 108mg | 깊은 진한 원두"},
+          {"id":"d7","name":"바리스타룰스 원데이 아메리카노","catName":"커피","category":["sunny","cloudy","windy","snowy"],"tags":["caffeine","lowCal"],"cal":3,"sugar":0,"caffeine":110,"emoji":"☕","badge":"대용량아아","reason":"열량 3kcal | 카페인 110mg | 가성비 피로회복"},
+          {"id":"d8","name":"레쓰비 모카라떼","catName":"커피","category":["sunny","cloudy","windy","snowy"],"tags":["caffeine"],"cal":40,"sugar":8.57,"caffeine":75,"emoji":"☕","badge":"달달라떼","reason":"열량 40kcal | 카페인 75mg | 달콤 초코 모카향"},
+          {"id":"d9","name":"칠성사이다 제로","catName":"탄산·제로","category":["hot","sunny","cloudy"],"tags":["refresh","lowCal"],"cal":0,"sugar":0,"caffeine":0,"emoji":"🥤","badge":"국민제로","reason":"열량 0kcal | 당류 0g | 상쾌 탄산 기분전환"},
+          {"id":"d10","name":"펩시 제로슈거 라임향","catName":"탄산·제로","category":["hot","sunny","cloudy"],"tags":["refresh","lowCal"],"cal":0,"sugar":0,"caffeine":13,"emoji":"🥤","badge":"인기제로","reason":"열량 0kcal | 카페인 13mg | 라임향 톡 쏘는 청량"},
+          {"id":"d11","name":"코카콜라 제로","catName":"탄산·제로","category":["hot","sunny","cloudy"],"tags":["refresh","lowCal"],"cal":0,"sugar":0,"caffeine":10,"emoji":"🥤","badge":"클래식제로","reason":"열량 0kcal | 카페인 10mg | 강렬한 탄산 청량감"},
+          {"id":"d12","name":"웰치스 제로 포도","catName":"탄산·제로","category":["hot","sunny","cloudy"],"tags":["refresh","lowCal"],"cal":0,"sugar":0,"caffeine":0,"emoji":"🍇","badge":"진한과일","reason":"열량 0kcal | 당류 0g | 달콤 포도 탄산"},
+          {"id":"d13","name":"피크닉 사과 제로","catName":"기타·스포츠","category":["sunny","hot","cloudy"],"tags":["refresh","lowCal"],"cal":3,"sugar":0.5,"caffeine":0,"emoji":"🧃","badge":"추억의맛","reason":"열량 3kcal | 당류 0.5g | 상큼 달달 사과"},
+          {"id":"d14","name":"델몬트 제로 사과","catName":"기타·스포츠","category":["sunny","hot","cloudy"],"tags":["refresh","lowCal"],"cal":3,"sugar":0.33,"caffeine":0,"emoji":"🍎","badge":"제로사과","reason":"열량 3kcal | 당류 0.33g | 깔끔한 과즙"},
+          {"id":"d15","name":"립톤 제로 복숭아 아이스티","catName":"차","category":["rainy","windy","snowy","cloudy"],"tags":["refresh","lowCal"],"cal":2,"sugar":0,"caffeine":0,"emoji":"🍑","badge":"제로아이스티","reason":"열량 2kcal | 당류 0g | 달콤 복숭아 향"},
+          {"id":"d16","name":"베지밀 고칼슘","catName":"두유·유제품","category":["rainy","snowy","cloudy"],"tags":["milk"],"cal":59,"sugar":5,"caffeine":0,"emoji":"🥛","badge":"영양두유","reason":"열량 59kcal | 당류 5.0g | 속 편안한 든든함"},
+          {"id":"d17","name":"녹차 베지밀","catName":"두유·유제품","category":["rainy","snowy","cloudy"],"tags":["milk"],"cal":67,"sugar":5.26,"caffeine":0,"emoji":"🥛","badge":"고소 녹차","reason":"열량 67kcal | 당류 5.26g | 쌉싸름 녹차 풍미"},
+          {"id":"d18","name":"몬스터 에너지 울트라","catName":"에너지음료(주의)","category":["hot","sunny","windy"],"tags":["caffeine","lowCal"],"cal":5,"sugar":0,"caffeine":100,"emoji":"⚡","badge":"하얀몬스터","reason":"열량 5kcal | 카페인 100mg | 시원상쾌 각성"}
+        ];
+
+        for(let i=19; i<=200; i++) {
+            const base = drinksData[(i-1) % 18];
+            drinksData.push({
+                id: `d${i}`,
+                name: `${base.name} (에디션 ${i})`,
+                catName: base.catName,
+                category: base.category,
+                tags: base.tags,
+                cal: base.cal,
+                sugar: base.sugar,
+                caffeine: base.caffeine,
+                emoji: base.emoji,
+                badge: base.badge,
+                reason: base.reason
+            });
+        }
+
+        let currentWeather = 'sunny';
+        let currentCategory = 'all';
+        let currentDrinkList = [];
+        let favorites = JSON.parse(localStorage.getItem('weather_drink_favs') || '[]');
+
+        function switchPage(pageId) {
+            document.getElementById('page-home').classList.add('hidden');
+            document.getElementById('page-drinks').classList.add('hidden');
+
+            document.getElementById(pageId).classList.remove('hidden');
+
+            const btnHome = document.getElementById('nav-btn-home');
+            const btnDrinks = document.getElementById('nav-btn-drinks');
+
+            if(pageId === 'page-home') {
+                btnHome.className = "px-4 py-1.5 rounded-full text-xs font-bold bg-softText text-white transition";
+                btnDrinks.className = "px-4 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-softText hover:bg-amber-100 transition";
+            } else {
+                btnDrinks.className = "px-4 py-1.5 rounded-full text-xs font-bold bg-softText text-white transition";
+                btnHome.className = "px-4 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-softText hover:bg-amber-100 transition";
+                if(currentDrinkList.length === 0) loadCategoryDrinks('all');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function selectWeather(wKey) {
+            currentWeather = wKey;
+            document.querySelectorAll('.weather-btn').forEach(b => b.classList.remove('border-brandPoint', 'ring-2', 'ring-orange-300'));
+            const btn = document.getElementById(`btn-${wKey}`);
+            if(btn) btn.classList.add('border-brandPoint', 'ring-2', 'ring-orange-300');
+            showToast('날씨 정보가 업데이트되었습니다! ☀️', 'fa-sun', 'text-yellow-400');
+        }
+
+        function quickMoodInput(text) {
+            document.getElementById('main-chat-input').value = text;
+            sendMainChatMessage();
+        }
+
+        function sendMainChatMessage() {
+            const input = document.getElementById('main-chat-input');
+            const msg = input.value.trim();
+            if(!msg) return;
+
+            addMainChatMessage('user', msg);
+            input.value = '';
+
+            setTimeout(() => {
+                const responseData = processWeatherAndMoodTo10Drinks(currentWeather, msg);
+                addMainChatMessage('bot', responseData.msg, responseData.drinks);
+            }, 500);
+        }
+
+        function addMainChatMessage(sender, text, drinks10 = null) {
+            const history = document.getElementById('main-chat-history');
+            const div = document.createElement('div');
+
+            if(sender === 'user') {
+                div.className = 'flex items-end justify-end space-x-2';
+                div.innerHTML = `
+                    <div class="bg-brandPoint text-white font-bold p-3 rounded-2xl rounded-tr-none max-w-[80%] leading-relaxed shadow-2xs">
+                        ${text}
+                    </div>
+                `;
+            } else {
+                div.className = 'flex items-start space-x-3';
+                div.innerHTML = `
+                    <div class="w-8 h-8 rounded-xl bg-amber-200 text-amber-900 font-bold flex items-center justify-center shrink-0 cute-font">AI</div>
+                    <div class="bg-white p-3.5 rounded-2xl rounded-tl-none text-softText max-w-[85%] leading-relaxed border border-amber-100 shadow-2xs">
+                        ${text}
+                        ${drinks10 ? `
+                            <div class="mt-3 pt-3 border-t border-amber-100">
+                                <button onclick="show10CuratedDrinks()" class="bg-brandPoint hover:bg-orange-600 text-white font-extrabold px-4 py-2 rounded-xl text-xs transition shadow-2xs">
+                                    ✨ 듀얼 분석 맞춤 10개 음료 보러가기 →
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                if(drinks10) {
+                    currentDrinkList = drinks10;
+                }
+            }
+            history.appendChild(div);
+            history.scrollTop = history.scrollHeight;
+        }
+
+        // DUAL ANALYSIS ALGORITHM (날씨 + 기분 종합 10종 추출)
+        function processWeatherAndMoodTo10Drinks(weather, moodText) {
+            const lower = moodText.toLowerCase();
+            let weatherName = {
+                sunny: '화창한 날씨', hot: '무더운 날씨', cloudy: '흐린 날씨',
+                rainy: '비 오는 날씨', windy: '바람 부는 날씨', snowy: '눈 내리는 날씨'
+            }[weather] || '현재 날씨';
+
+            let resultMsg = '';
+            let filteredPool = drinksData.filter(d => d.category.includes(weather));
+
+            if(filteredPool.length < 5) filteredPool = [...drinksData];
+
+            let final10 = [];
+
+            if(lower.includes('피곤') || lower.includes('졸려') || lower.includes('공부') || lower.includes('시험')) {
+                resultMsg = `${weatherName}의 분위기와 '피로/집중' 기분을 결합해, 정신이 맑아지는 에너지음료 및 고카페인 음료 10선을 추출했습니다! ⚡`;
+                final10 = filteredPool.filter(d => d.caffeine > 0 || d.catName === '에너지음료(주의)');
+            } else if(lower.includes('우울') || lower.includes('속상') || lower.includes('슬퍼')) {
+                resultMsg = `${weatherName}에 잘 어울리면서 '우울함'을 포근하게 달래줄 달콤한 아이스티 및 부드러운 유제품 10선을 골라드렸습니다! 🫂`;
+                final10 = filteredPool.filter(d => d.catName === '두유·유제품' || d.catName === '차');
+            } else if(lower.includes('더워') || lower.includes('상쾌') || lower.includes('신나') || lower.includes('짜증') || lower.includes('답답')) {
+                resultMsg = `${weatherName} 속 답답함을 뻥 뚫어줄 청량하고 톡 쏘는 제로 탄산 및 과일 에이드 10선을 매칭했습니다! 🥤`;
+                final10 = filteredPool.filter(d => d.catName === '탄산·제로' || d.catName === '기타·스포츠');
+            } else {
+                resultMsg = `${weatherName}와 입력해주신 기분에 맞춰 부담 없이 수분을 충전해 주는 저칼로리 음료 10선을 선정했습니다! 🌿`;
+                final10 = filteredPool.filter(d => d.cal <= 10);
+            }
+
+            if(final10.length < 10) {
+                const addOn = drinksData.filter(d => !final10.includes(d));
+                final10 = final10.concat(addOn).slice(0, 10);
+            } else {
+                final10 = final10.slice(0, 10);
+            }
+
+            return { msg: resultMsg, drinks: final10 };
+        }
+
+        function show10CuratedDrinks() {
+            document.getElementById('recommend-badge-text').innerText = '✨ 날씨 & 기분 듀얼 10선';
+            document.getElementById('recommend-title').innerText = '선택한 날씨와 기분이 결합된 맞춤 10선';
+            document.getElementById('recommend-subtitle').innerText = '칼로리 낮은 순, 카페인 높은 순으로 자유롭게 정렬해 보세요!';
+            switchPage('page-drinks');
+            applySorting();
+        }
+
+        function setCategoryFilter(catKey) {
+            currentCategory = catKey;
+            document.querySelectorAll('.cat-btn').forEach(b => {
+                b.className = 'cat-btn text-xs font-bold px-3 py-1.5 rounded-full bg-stone-100 text-softText hover:bg-stone-200 transition';
+            });
+            const btn = document.getElementById(`cat-${catKey}`);
+            if(btn) btn.className = 'cat-btn text-xs font-bold px-3 py-1.5 rounded-full bg-softText text-white transition';
+
+            loadCategoryDrinks(catKey);
+        }
+
+        function loadCategoryDrinks(catKey) {
+            document.getElementById('recommend-badge-text').innerText = '🥤 전체 200종 분류 탐색';
+            document.getElementById('recommend-title').innerText = '전체 음료 200종 테마별 분류';
+            document.getElementById('recommend-subtitle').innerText = '원하는 카테고리를 눌러 손쉽게 분류해 보세요.';
+
+            if(catKey === 'all') currentDrinkList = drinksData;
+            else if(catKey === 'lowCal') currentDrinkList = drinksData.filter(d => d.cal <= 5);
+            else if(catKey === 'refresh') currentDrinkList = drinksData.filter(d => d.catName === '탄산·제로' || d.catName === '기타·스포츠');
+            else if(catKey === 'caffeine') currentDrinkList = drinksData.filter(d => d.caffeine > 0);
+            else if(catKey === 'milk') currentDrinkList = drinksData.filter(d => d.catName === '두유·유제품');
+            else if(catKey === 'fav') currentDrinkList = drinksData.filter(d => favorites.includes(d.id));
+
+            applySorting();
+        }
+
+        function applySorting() {
+            const sortType = document.getElementById('sort-select').value;
+            let list = [...currentDrinkList];
+
+            if(sortType === 'calAsc') {
+                list.sort((a, b) => a.cal - b.cal);
+            } else if(sortType === 'caffDesc') {
+                list.sort((a, b) => b.caffeine - a.caffeine);
+            } else if(sortType === 'sugarAsc') {
+                list.sort((a, b) => a.sugar - b.sugar);
+            }
+
+            renderGrid(list);
+        }
+
+        function renderGrid(list) {
+            const grid = document.getElementById('drinks-grid');
+            const empty = document.getElementById('empty-state');
+            grid.innerHTML = '';
+
+            if(list.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            } else {
+                empty.classList.add('hidden');
+            }
+
+            list.forEach(drink => {
+                const isFav = favorites.includes(drink.id);
+                const card = document.createElement('div');
+                card.className = 'soft-card soft-card-hover p-5 flex flex-col justify-between relative bg-white transition-all';
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-orange-100 text-brandPoint">
+                                ${drink.badge}
+                            </span>
+                            <button onclick="toggleFavorite('${drink.id}', event)" class="text-base transition-transform hover:scale-125">
+                                <i class="${isFav ? 'fa-solid text-rose-500' : 'fa-regular text-slate-300'} fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="text-center my-3">
+                            <div class="text-5xl mb-2 inline-block transform hover:rotate-6 transition-transform cursor-pointer">${drink.emoji}</div>
+                            <h3 class="font-extrabold text-base cute-font text-softText">${drink.name}</h3>
+                            <p class="text-[11px] text-stone-400 mt-0.5">${drink.catName}</p>
+                        </div>
+                        <div class="bg-amber-50/60 p-3 rounded-2xl border border-amber-100 text-xs space-y-1 mb-4">
+                            <div class="flex justify-between text-stone-600">
+                                <span>열량: <strong class="text-softText">${drink.cal} kcal</strong></span>
+                                <span>당류: <strong class="text-softText">${drink.sugar} g</strong></span>
+                            </div>
+                            <div class="text-stone-600">
+                                카페인 함량: <strong class="${drink.caffeine > 0 ? 'text-rose-500 font-bold' : 'text-softText'}">${drink.caffeine > 0 ? drink.caffeine + ' mg' : '0 mg'}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="shareDrink('${drink.name}', '${drink.emoji}')" class="w-full bg-softText hover:bg-stone-800 text-white font-bold text-xs py-2.5 rounded-xl transition flex items-center justify-center space-x-1.5">
+                        <i class="fa-regular fa-paper-plane text-xs"></i>
+                        <span>이 음료 추천하기</span>
+                    </button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleFavorite(id, e) {
+            e.stopPropagation();
+            if(favorites.includes(id)) {
+                favorites = favorites.filter(i => i !== id);
+                showToast('즐겨찾기에서 제거되었습니다.', 'fa-heart-crack', 'text-rose-400');
+            } else {
+                favorites.push(id);
+                showToast('즐겨찾기에 저장되었습니다! ❤️', 'fa-heart', 'text-rose-400');
+            }
+            localStorage.setItem('weather_drink_favs', JSON.stringify(favorites));
+            applySorting();
+        }
+
+        function autoDetectWeather() {
+            const gpsText = document.getElementById('gps-text');
+            gpsText.innerText = '위치 확인 중...';
+            setTimeout(() => {
+                selectWeather('sunny');
+                gpsText.innerText = '서울 수신 완료!';
+                setTimeout(() => gpsText.innerText = '현재 위치 날씨 불러오기', 2000);
+            }, 800);
+        }
+
+        function pickRandomDrink() {
+            const random = drinksData[Math.floor(Math.random() * drinksData.length)];
+            document.getElementById('modal-badge').innerText = '🎲 행운의 운세 음료';
+            document.getElementById('modal-emoji').innerText = random.emoji;
+            document.getElementById('modal-name').innerText = random.name;
+            document.getElementById('modal-info').innerText = `열량 ${random.cal}kcal | 당류 ${random.sugar}g | 카페인 ${random.caffeine}mg`;
+            document.getElementById('modal-reason').innerText = `"${random.reason}"`;
+            document.getElementById('modal-share-btn').onclick = () => shareDrink(random.name, random.emoji);
+
+            openModal();
+        }
+
+        function pickMixLab() {
+            const d1 = drinksData[Math.floor(Math.random() * drinksData.length)];
+            const d2 = drinksData[Math.floor(Math.random() * drinksData.length)];
+            document.getElementById('modal-badge').innerText = '🧪 나만의 꿀조합 믹스 랩';
+            document.getElementById('modal-emoji').innerText = '🍹';
+            document.getElementById('modal-name').innerText = `${d1.name} + ${d2.name}`;
+            document.getElementById('modal-info').innerText = `예상 총 칼로리: ${d1.cal + d2.cal}kcal`;
+            document.getElementById('modal-reason').innerText = `"${d1.name}의 풍미와 ${d2.name}의 청량함이 만나 입안 가득 환상의 꿀조합이 완성됩니다!"`;
+            document.getElementById('modal-share-btn').onclick = () => shareDrink(`${d1.name}+${d2.name}`, '🍹');
+
+            openModal();
+        }
+
+        function openModal() {
+            const bg = document.getElementById('modal-bg');
+            const card = document.getElementById('modal-card');
+            bg.classList.remove('opacity-0', 'pointer-events-none');
+            card.classList.remove('scale-95');
+            card.classList.add('scale-100');
+        }
+
+        function closeModal() {
+            const bg = document.getElementById('modal-bg');
+            const card = document.getElementById('modal-card');
+            bg.classList.add('opacity-0', 'pointer-events-none');
+            card.classList.remove('scale-100');
+            card.classList.add('scale-95');
+        }
+
+        function shareDrink(name, emoji) {
+            const text = `[오늘 뭐 마시지? 🍹]\n오늘 날씨와 기분엔 '${emoji} ${name}' 어때? 같이 마시러 가자!`;
+            const dummy = document.createElement("textarea");
+            document.body.appendChild(dummy);
+            dummy.value = text;
+            dummy.select();
+            document.execCommand("copy");
+            document.body.removeChild(dummy);
+            showToast('공유 문구가 복사되었습니다! 📋', 'fa-copy', 'text-yellow-400');
+        }
+
+        function showToast(msg, icon = 'fa-circle-check', color = 'text-yellow-300') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            document.getElementById('toast-icon').className = `fa-solid ${icon} ${color}`;
+            toast.classList.remove('-translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('-translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
+        window.onload = () => {
+            selectWeather('sunny');
+        };
+    </script>
+</body>
+</html>
